@@ -1,15 +1,17 @@
 const jwt = require("jsonwebtoken")
+
 const authMiddleware = (req, res, next) => {
-    try {
-        const token = req.cookies.x-acc-tkn
-        if (!token) { return responseHandler.error(res, "Unauthorized", 401) }
-        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-        req.user = decodedToken
-        next()
-    }
-    catch (err) {
-        responseHandler.error(res, "Internal Server Error")
-        console.log(err)
-    }
-}
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const token = authHeader.split(" ")[1];
+  try {
+    const payload = jwt.verify(token, process.env.SECRET_KEY);
+    req.user = payload;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
 module.exports = authMiddleware
